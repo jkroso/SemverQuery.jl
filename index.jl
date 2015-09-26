@@ -6,26 +6,29 @@ immutable VersionRestriction{operator} <: VersionQuery
   value::VersionNumber
 end
 
+toInt(s::AbstractString) = parse(Int, s)
+toInt(n::Number) = round(Int, n)
+
 immutable VersionGlob <: VersionQuery
   major::Int
   minor::Int
   patch::Int
   VersionGlob(a,b,c) = begin
     a ≡ nothing && return new(-1,-1,-1)
-    b ≡ nothing && return new(int(a),-1,-1)
-    c ≡ nothing && return new(int(a),int(b),-1)
-    return new(int(a),int(b),int(c))
+    b ≡ nothing && return new(toInt(a),-1,-1)
+    c ≡ nothing && return new(toInt(a),toInt(b),-1)
+    return new(toInt(a),toInt(b),toInt(c))
   end
 end
 
 immutable Conjunction <: VersionQuery
-  queries::(VersionQuery...)
+  queries::Tuple{Vararg{VersionQuery}}
 end
 
 ##
 # Parse a SemverQuery from a string
 #
-function semver_query(s::String)
+function semver_query(s::AbstractString)
   s == "*" && return VersionGlob(-1,-1,-1)
   queries = map(eachmatch(regex, s)) do match
     op,major,minor,patch = match.captures
